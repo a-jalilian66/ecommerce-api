@@ -7,9 +7,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/core
 
-# Create non-root user for security
-RUN addgroup --system app && adduser --system --group app
-
 # Taking environment variable as argument
 ARG DJANGO_ENVIRONMENT=development
 ENV DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT}
@@ -33,15 +30,20 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /requirements/base.txt && \
     pip install --no-cache-dir -r /requirements/${DJANGO_ENVIRONMENT}.txt
 
-# Copy scripts
+# Copy scripts and set permissions
 COPY ./scripts /scripts
-RUN chmod -R +x /scripts
+RUN chmod -R 755 /scripts
+
+# Add scripts to PATH
 ENV PATH="/scripts:$PATH"
 
 # Copy project files
 COPY ./core /core
 
-# Change ownership to non-root user
+# Create non-root user for security
+RUN addgroup --system app && adduser --system --group app
+
+# Change ownership
 RUN chown -R app:app /core
 RUN chown -R app:app /scripts
 
@@ -51,5 +53,5 @@ USER app
 # Expose port
 EXPOSE 8000
 
-# Run entrypoint script
-CMD ["entrypoint.sh"]
+# Run entrypoint script with explicit path
+CMD ["/scripts/entrypoint.sh"]
