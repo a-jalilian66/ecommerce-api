@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     netcat-openbsd \
+    dos2unix \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -30,8 +31,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /requirements/base.txt && \
     pip install --no-cache-dir -r /requirements/${DJANGO_ENVIRONMENT}.txt
 
-# Copy scripts and set permissions
+# Copy scripts first and fix permissions
 COPY ./scripts /scripts
+# Convert to Unix line endings (in case of Windows CRLF)
+RUN dos2unix /scripts/entrypoint.sh
+# Make script executable with proper permissions
+RUN chmod +x /scripts/entrypoint.sh
+# Set full access for scripts directory
 RUN chmod -R 755 /scripts
 
 # Add scripts to PATH
@@ -43,7 +49,7 @@ COPY ./core /core
 # Create non-root user for security
 RUN addgroup --system app && adduser --system --group app
 
-# Change ownership
+# Change ownership AFTER setting permissions
 RUN chown -R app:app /core
 RUN chown -R app:app /scripts
 
@@ -53,5 +59,5 @@ USER app
 # Expose port
 EXPOSE 8000
 
-# Run entrypoint script with explicit path
-CMD ["/scripts/entrypoint.sh"]
+# Run entrypoint script with bash for better error handling
+CMD ["bash", "/scripts/entrypoint.sh"]
