@@ -3,9 +3,9 @@ FROM python:3.10-slim
 LABEL authors="a.jalilian66@gmail.com"
 
 # Setting environment variables
-ENV PYTHONDONTWRITEBYTECODE=1  # Prevents Python from writing .pyc files
-ENV PYTHONUNBUFFERED=1         # Unbuffered output - better for logging
-ENV PYTHONPATH=/core           # Add /core to Python path
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/core
 
 # Create non-root user for security
 RUN addgroup --system app && adduser --system --group app
@@ -16,11 +16,11 @@ ENV DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \       # Required for compiling some packages
-    libpq-dev \             # PostgreSQL driver
-    netcat-openbsd \        # To check connectivity to services
-    && apt-get clean \      # Clear cache
-    && rm -rf /var/lib/apt/lists/*  # Reduce image size
+    build-essential \
+    libpq-dev \
+    netcat-openbsd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /core
