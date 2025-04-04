@@ -12,6 +12,7 @@ echo "PostgreSQL started successfully"
 if [ "$DJANGO_ENVIRONMENT" = "production" ]; then
     mkdir -p /var/log/django
     touch /var/log/django/error.log
+    chmod 777 /var/log/django/error.log
     echo "Created log directory for production"
 fi
 
@@ -40,7 +41,13 @@ if [ "$DJANGO_ENVIRONMENT" = "production" ]; then
     echo "Starting production server with gunicorn..."
     # Use gunicorn for production with optimized settings
     gunicorn core.wsgi:application --bind 0.0.0.0:8000 \
-        --workers=4 \                # Number of workers: typically 2 * CPU cores + 1
-        --threads=2 \                # Threads per worker
-        --worker-class=gthread \     # Worker type: gthread performs better with django
-        --worker-tmp-dir=/dev/shm \  # Use memory instead of disk for temp
+        --workers=4 \
+        --threads=2 \
+        --worker-class=gthread \
+        --worker-tmp-dir=/dev/shm \
+        --timeout=120 \
+        --log-level=info
+else
+    echo "Starting development server..."
+    python manage.py runserver 0.0.0.0:8000
+fi

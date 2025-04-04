@@ -6,7 +6,6 @@ import os.path
 from pathlib import Path
 from decouple import config, Csv
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,17 +31,27 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Third-party plugins
-    'rest_framework',   # Api Framework
-    'corsheaders',      # For CORS
-    'drf_yasg',         # For API Documentation
-    'django_filters',   # For advance filters in the API
-    'robots'            # For the robots.txt file
+    'rest_framework',  # Api Framework
+    'corsheaders',  # For CORS
+    'drf_yasg',  # For API Documentation
+    'django_filters',  # For advance filters in the API
+    'robots'  # For the robots.txt file,
+
+    # Health check
+    'health_check',
+    'health_check.db',
+    'health_check.storage',
+    'health_check.contrib.migrations',
+
+    'django_celery_results',
 
     # Local apps
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -101,11 +110,31 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR.parent.parent, 'staticfiles')
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# Media settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR.parent.parent, 'media')
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
