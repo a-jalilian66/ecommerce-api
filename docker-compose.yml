@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Web service - main Django application
+  web:
+    container_name: ecommerce_api_web
+    build:
+      context: .  # Use current directory as build context
+      args:
+        - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Get from env var or use default
+    ports:
+      - "8000:8000"  # Expose port 8000
+    env_file:
+      - ./.env.${DJANGO_ENVIRONMENT:-development}  # Select env file based on environment
+    environment:
+      - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Set env var inside container
+    volumes:
+      - ./core:/core  # Map core directory to /core in container
+      - ./scripts:/scripts  # Map scripts directory to /scripts in container
+    depends_on:
+      - db  # Dependency on database service
+    restart: always  # Always restart on failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health/" ]  # Health check endpoint
+      interval: 30s  # Check interval
+      timeout: 10s   # Timeout duration
+      retries: 3     # Number of retries
+    networks:
+      - ecommerce_network  # Use internal network
+
+  # PostgreSQL database service
+  db:
+    container_name: ecommerce_api_db
+    image: postgres:17  # Use latest stable PostgreSQL version
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/  # Store data in volume
+    env_file:
+      - ./.env.${DJANGO_ENVIRONMENT:-development}  # Use same env file as web service
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}  # Password from env var
+      - POSTGRES_USER=${DB_USER}          # User from env var
+      - POSTGRES_DB=${DB_NAME}            # Database name from env var
+    ports:
+      - "5432:5432"  # Expose port for external access (good for development)
+    restart: always  # Always restart
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]  # Database health check
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce_network  # Use internal network
+
+networks:
+  ecommerce_network:  # Define internal network for inter-service communication
+
+volumes:
+  postgres_data:  # Define volume for persistent database storage
