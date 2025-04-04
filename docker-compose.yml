@@ -85,8 +85,10 @@ services:
     environment:
       - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Set env var inside container
     volumes:
-      - ./core:/core  # Map core directory to /core in container
-      - django_logs:/var/log/django  # Logs volume
+      - ./core:/core
+      - ./scripts:/scripts
+      - django_logs:/var/log/django
+      - celery_beat_data:/var/lib/celery
     depends_on:
       - db  # Dependency on database service
       - redis  # Dependency on Redis
@@ -107,8 +109,10 @@ services:
     environment:
       - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Set env var inside container
     volumes:
-      - ./core:/core  # Map core directory to /core in container
-      - django_logs:/var/log/django  # Logs volume
+      - ./core:/core
+      - ./scripts:/scripts
+      - django_logs:/var/log/django
+      - celery_beat_data:/var/lib/celery
     depends_on:
       - db  # Dependency on database service
       - redis  # Dependency on Redis
@@ -121,8 +125,9 @@ networks:
   ecommerce_network:  # Define internal network for inter-service communication
 
 volumes:
-  postgres_data:  # Define volume for persistent database storage
-  redis_data:     # Define volume for Redis data
-  static_volume:  # Define volume for static files
-  media_volume:   # Define volume for media files
-  django_logs:    # Define volume for Django logs
+  postgres_data:    # Define volume for persistent database storage
+  redis_data:       # Define volume for Redis data
+  static_volume:    # Define volume for static files
+  media_volume:     # Define volume for media files
+  django_logs:      # Define volume for Django logs
+  celery_beat_data: # Add this line - Volume to store Celery Beat files

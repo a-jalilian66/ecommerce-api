@@ -29,21 +29,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     # Third-party plugins
     'rest_framework',  # Api Framework
     'corsheaders',  # For CORS
     'drf_yasg',  # For API Documentation
     'django_filters',  # For advance filters in the API
-    'robots'  # For the robots.txt file,
+    'robots',  # For the robots.txt file,
+    'django_celery_results',
 
     # Health check
     'health_check',
     'health_check.db',
     'health_check.storage',
     'health_check.contrib.migrations',
-
-    'django_celery_results',
 
     # Local apps
 ]
@@ -132,9 +132,13 @@ REST_FRAMEWORK = {
 }
 
 # Celery Configuration
+CELERY_BEAT_SCHEDULE_FILENAME = "/var/lib/celery/celerybeat-schedule"
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Site Framework Settings
+SITE_ID = 1

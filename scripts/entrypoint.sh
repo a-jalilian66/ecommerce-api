@@ -2,11 +2,15 @@
 set -e  # Exit immediately if a command exits with a non-zero status
 
 # Wait for database to be ready
+#echo "Waiting for postgres..."
+#while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do
+#  sleep 1
+#done
+#echo "PostgreSQL started successfully"
+
 echo "Waiting for postgres..."
-while ! nc -z $DB_HOST $DB_PORT; do
-  sleep 0.1
-done
-echo "PostgreSQL started successfully"
+sleep 10
+echo "PostgreSQL assumed ready"
 
 # Create log directory (for production environment)
 if [ "$DJANGO_ENVIRONMENT" = "production" ]; then
