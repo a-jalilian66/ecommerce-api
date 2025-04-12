@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # Web service - main Django application
+  web:
+    container_name: ecommerce_api_web
+    build:
+      context: .  # Use current directory as build context
+      args:
+        - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Get from env var or use default
+    ports:
+      - "8000:8000"  # Expose port 8000
+    env_file:
+      - ./.env.${DJANGO_ENVIRONMENT:-development}  # Select env file based on environment
+    environment:
+      - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Set env var inside container
+    volumes:
+      - ./core:/core  # Map core directory to /core in container
+      - ./scripts:/scripts  # Map scripts directory to /scripts in container
+      - static_volume:/core/staticfiles  # Static files volume
+      - media_volume:/core/media  # Media files volume
+      - django_logs:/var/log/django  # Logs volume
+    depends_on:
+      - db  # Dependency on database service
+      - redis  # Dependency on Redis
+    restart: always  # Always restart on failure
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health/" ]  # Health check endpoint
+      interval: 30s  # Check interval
+      timeout: 10s   # Timeout duration
+      retries: 3     # Number of retries
+    networks:
+      - ecommerce_network  # Use internal network
+
+  # PostgreSQL database service
+  db:
+    container_name: ecommerce_api_db
+    image: postgres:17  # Use latest stable PostgreSQL version
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/  # Store data in volume
+    env_file:
+      - ./.env.${DJANGO_ENVIRONMENT:-development}  # Use same env file as web service
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}  # Password from env var
+      - POSTGRES_USER=${DB_USER}          # User from env var
+      - POSTGRES_DB=${DB_NAME}            # Database name from env var
+    ports:
+      - "5432:5432"  # Expose port for external access (good for development)
+    restart: always  # Always restart
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]  # Database health check
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce_network  # Use internal network
+
+  # Redis service
+  redis:
+    container_name: ecommerce_api_redis
+    image: redis:latest  # Use latest Redis image
+    ports:
+      - "6379:6379"  # Expose Redis port
+    volumes:
+      - redis_data:/data  # Store Redis data in volume
+    restart: always  # Always restart
+    networks:
+      - ecommerce_network  # Use internal network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery worker service
+  celery:
+    container_name: ecommerce_api_celery
+    build:
+      context: .  # Use current directory as build context
+      args:
+        - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Get from env var or use default
+    command: celery -A core worker -l INFO  # Run Celery worker
+    env_file:
+      - ./.env.${DJANGO_ENVIRONMENT:-development}  # Use same env file as web service
+    environment:
+      - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Set env var inside container
+    volumes:
+      - ./core:/core
+      - ./scripts:/scripts
+      - django_logs:/var/log/django
+      - celery_beat_data:/var/lib/celery
+    depends_on:
+      - db  # Dependency on database service
+      - redis  # Dependency on Redis
+    restart: always  # Always restart
+    networks:
+      - ecommerce_network  # Use internal network
+
+  # Celery beat service for scheduled tasks
+  celery-beat:
+    container_name: ecommerce_api_celery_beat
+    build:
+      context: .  # Use current directory as build context
+      args:
+        - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Get from env var or use default
+    command: celery -A core beat -l INFO  # Run Celery beat
+    env_file:
+      - ./.env.${DJANGO_ENVIRONMENT:-development}  # Use same env file as web service
+    environment:
+      - DJANGO_ENVIRONMENT=${DJANGO_ENVIRONMENT:-development}  # Set env var inside container
+    volumes:
+      - ./core:/core
+      - ./scripts:/scripts
+      - django_logs:/var/log/django
+      - celery_beat_data:/var/lib/celery
+    depends_on:
+      - db  # Dependency on database service
+      - redis  # Dependency on Redis
+      - celery  # Dependency on Celery worker
+    restart: always  # Always restart
+    networks:
+      - ecommerce_network  # Use internal network
+
+networks:
+  ecommerce_network:  # Define internal network for inter-service communication
+
+volumes:
+  postgres_data:    # Define volume for persistent database storage
+  redis_data:       # Define volume for Redis data
+  static_volume:    # Define volume for static files
+  media_volume:     # Define volume for media files
+  django_logs:      # Define volume for Django logs
+  celery_beat_data: # Add this line - Volume to store Celery Beat files

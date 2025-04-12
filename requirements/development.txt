@@ -1,0 +1,7 @@
+-r base.txt
+
+# ابزارهای توسعه
+django-debug-toolbar==5.1.0
+ipython
+
+psycopg2-binary==2.9.10

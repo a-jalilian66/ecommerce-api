@@ -1,0 +1,30 @@
+
+django==5.2
+Pillow==11.1.0
+djangorestframework==3.16.0
+
+# env controlls
+python-decouple==3.8
+
+# third party modules
+markdown==3.7
+django-filter==25.1
+drf-yasg[validation]
+django-cors-headers==4.7.0
+django-robots==6.1
+
+# deployment module
+gunicorn==23.0.0
+whitenoise==6.9.0
+
+# health check
+django-health-check==3.18.3
+
+# JWT Authentication
+djangorestframework-simplejwt==5.3.0
+
+
+# Celery
+celery==5.3.6
+redis==5.0.1
+django-celery-results==2.5.1
